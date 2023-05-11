@@ -1,25 +1,13 @@
 from django.contrib.auth import authenticate, login
-from rest_framework.authentication import SessionAuthentication
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
 from rest_framework.response import Response
-from datetime import datetime
-from django.views.decorators.csrf import csrf_protect, csrf_exempt
+from rest_framework.views import APIView
 
+from auth_learning_django.customSessionAuth import CustomSessionAuthenticationBackend
 
-# from auth_learning_django.customSessionAuth import CustomSessionAuthenticationBackend, MAX_LOGIN_ATTEMPTS
-
-class CsrfExemptSessionAuthentication(SessionAuthentication):
-    def enforce_csrf(self, request):
-        return
 
 class LoginView(APIView):
-    authentication_classes = [CsrfExemptSessionAuthentication]
-
-    @csrf_exempt
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+    authentication_classes = [CustomSessionAuthenticationBackend]
 
     def post(self, request):
         username = request.data.get('username')
@@ -33,8 +21,7 @@ class LoginView(APIView):
 
 
 class AuthenticatedView(APIView):
-    # authentication_classes = [CustomSessionAuthenticationBackend]
-    authentication_classes = [SessionAuthentication]
+    authentication_classes = [CustomSessionAuthenticationBackend]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
