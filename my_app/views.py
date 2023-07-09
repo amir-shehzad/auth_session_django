@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login
+from django.contrib.sessions.models import Session
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -27,3 +28,14 @@ class AuthenticatedView(APIView):
     def get(self, request):
         data = {'message': 'You are authenticated'}
         return Response(data)
+
+
+class ResetSessionsView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def delete(self, request):
+        sessions = Session.objects.all()
+        sessions.delete()
+
+        return Response({"message": "Successfully reset"})
