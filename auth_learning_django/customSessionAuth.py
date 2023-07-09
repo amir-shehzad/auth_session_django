@@ -14,8 +14,8 @@ class CustomSessionAuthenticationBackend(SessionAuthentication):
     and also via session ID. If username and password are provided, it checks them against the database.
     If session ID is provided, it delegates authentication to the parent SessionAuthentication class.
     """
-    MAX_LOGIN_ATTEMPTS = 5
-    BLOCKED_MINUTES = 10
+    MAX_LOGIN_ATTEMPTS = 3
+    BLOCKED_MINUTES = 2
 
     def enforce_csrf(self, request):
         """
@@ -46,6 +46,14 @@ class CustomSessionAuthenticationBackend(SessionAuthentication):
             return None
 
         try:
+            # Check if user is blocked from logging in
+            blocked_until = request.session.get('blocked_until')
+            if blocked_until:
+                blocked_until = datetime.fromtimestamp(blocked_until)
+                if blocked_until > datetime.now():
+                    raise AuthenticationFailed(
+                        f'You are blocked from logging in till {self.convert_to_localtime(blocked_until)}')
+
             user = User.objects.get(username=username)
             # Check if the password is correct
             if not user.check_password(password):
@@ -58,19 +66,12 @@ class CustomSessionAuthenticationBackend(SessionAuthentication):
                     request.session['blocked_until'] = blocked_until.timestamp()
                     raise AuthenticationFailed(f"Too many incorrect login attempts. You are blocked from logging "
                                                f"in till {self.convert_to_localtime(blocked_until)}")
+                else:
+                    return None
             else:
-                # Reset login attempts counter if login succeeds
+                # Reset login attempts and timer if login succeeds
+                request.session.pop('blocked_until', None)
                 request.session.pop('login_attempts', None)
-
-                # Check if user is blocked from logging in
-                blocked_until = request.session.get('blocked_until')
-                if blocked_until:
-                    blocked_until = datetime.fromtimestamp(blocked_until)
-                    if blocked_until > datetime.now():
-                        raise AuthenticationFailed(
-                            f'You are blocked from logging in till {self.convert_to_localtime(blocked_until)}')
-                    else:
-                        request.session.pop('blocked_until', None)
 
                 return user, None
         except User.DoesNotExist:
