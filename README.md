@@ -52,7 +52,7 @@ Then, visit `http://localhost:8000/admin` in your web browser and log in with th
     - Requires session_id for authentication. Accessible only to logged-in users.
 
 - Reset Sessions URL (DELETE): `http://localhost:8000/reset_sessions`
-    - Requires session_id for authentication. Deletes all user sessions and logs users out.
+    - For demo, this doesn't require authentication. Deletes all user sessions and logs users out.
   
 ## Contributing
 
